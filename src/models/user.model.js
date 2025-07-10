@@ -14,9 +14,12 @@ const userSchema = new mongoose.Schema ({
             pin : { type : Number},
             city : { type : String},
             state : { type : String},
-            address_type : {type : addressEnum, default : 'home', required : true}  
+            address_type : {type : addressEnum, default : 'home'}  
         }
     ],
-    role : { type : roleEnum, default : 'user', required : true}
-})
+    role : { type : roleEnum, default : 'user', required : true},
+},
+    {
+        timeStamps : true
+    })
 module.exports = mongoose.model('User', userSchema);

@@ -11,6 +11,6 @@ const productSchema = new mongoose.Schema({
     images : [{ String}],
     ratings : { type : Number, required : true},
 },{
-    timestamp : true
+    timestamps : true
 });
 module.exports = mongoose.model('Product', productSchema);
