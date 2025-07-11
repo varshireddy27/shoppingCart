@@ -1,71 +1,64 @@
 const Product = require("../models/product.model");
-// const createProduct = async (req, res) => {
-//   try {
-//     const name = req.body.name;
-//     const type = req.body.type;
-//     const price = req.body.price;
-//     const ratings = req.body.ratings;
-
-
-//     const { image, images } = req.files;
-//     const product = new Product({
-//       name,
-//       type,
-//       price,
-//       ratings,
-//       image,
-//       images
-//     });
-//     const newProduct = await product.save();
-//     res.status(200).json(newProduct);
-//     res.json({body: req.body, files: req.files})
-//   } catch (err) {
-//     console.log("error", err)
-//     res
-//       .status(500)
-//       .json({ message: "Error creating product", error: err.message });
-//   }
-// };
-
 const createProduct = async (req, res) => {
   try {
-    const name = req.body.name;
-    const type = req.body.type;
-    const price = req.body.price;
-    const ratings = req.body.ratings;
-    const BASE_URL = "http://localhost:3000/images/";
-
-
-    const image = req.files.image;
-    const images = req.files.images;
-    if (!image && !images) {
-      return res.status(400).json({ message: "No image files uploaded" });
+ 
+    const { name, type, price, ratings } = req.body;
+    const image  = req.files;
+ 
+    if(!image){
+      res.status(404).send('cannot read the file');
     }
-    const imageurl = BASE_URL + image;
-    const imageurls= BASE_URL + images;
+    const file = req.files[0];
+    const newfilepath = file.filename;
+    console.log(newfilepath);
+    const base_url = "http://localhost:3000/upload/"
+    const imageurl = base_url + newfilepath;
+ 
+    const images = req.files;
+    console.log(images);
+    if(!images){
+      return res.status(400).send("File is not read");
+    }
+    const imageurls = [];
+    images.forEach((file, index) => {
+      const filepath = file.filename;
+      const base_url = "http://localhost:3000/upload/";
+      const imageurl = base_url + filepath;
+      imageurls.push(imageurl);
+      console.log(` ${index +1}. filename : ${file.originalname}`);
+    })
 
-    const product = new Product({
+    const newproduct = {
       name,
       type,
       price,
       ratings,
       image:imageurl,
-      images:imageurls
-    });
-    const newProduct = await product.save();
-    res.status(200).json(newProduct);
-    res.json({body: req.body, files: req.files})
+      images : imageurls
+    };
+    const updateproduct = await new Product(newproduct).save();
+    res.status(200).json({message:'data is retrieved',data:updateproduct});
+ 
   } catch (err) {
-    console.log("error", err)
-    res
-      .status(500)
-      .json({ message: "Error creating product", error: err.message });
+    res.status(500).send("internal serval error");
   }
 };
 
+const updateProduct = async(req, res) => {
+    const productId = req.params.id;
+    if(!productId) {
+      return res.status(404).send("Product Id not found");
+    }
+    const { brand, description, discount, stock} = req.body;
+    const updatedProduct = await Product.findByIdAndUpdate(productId,
+        {brand, description, discount, stock}
+    );
+    res.status(200).json(updatedProduct);
 
-module.exports = { createProduct };
+}
+ 
+module.exports = { 
+  createProduct,
+  updateProduct
+ };
 
-
-
-// module.exports = { createProduct };

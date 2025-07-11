@@ -1,14 +1,11 @@
 const express = require("express");
-
+const upload = require('./src/multer');
+const app = express();
+app.use(express.json());
+app.use('/upload', express.static('upload'));
 const userRouter = require("./src/routes/user.routes");
 const productRouter = require("./src/routes/product.routes");
-const upload = require("./src/multer");
-const app = express();
-
-app.use(upload.any());
-app.use(express.json());
-
 app.use("/user", userRouter);
-app.use("/product", productRouter);
-
+app.use("/product",upload.any(),productRouter);
+app.use('/product', productRouter);
 module.exports = app;
