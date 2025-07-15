@@ -42,7 +42,7 @@ const userLogin = async(req, res) => {
         if (!isMatch) {
             return res.status(400).json({ message: "Invalid password" });
         }
-        const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "1h" });
+        const token = jwt.sign({ id: user.id ,role: user.role}, JWT_SECRET, { expiresIn: "1h" });
         res.json({ token });
     } catch (err) {
         res.status(500).send ("Internal server error");
@@ -55,8 +55,8 @@ const getUser = async (req, res) => {
       res.status(401).send("Token is missing");
     }
     const token = authorization.split(" ")[1];
-    const decoded = jwt.verify(token, "abcd123456");
-    const userID = decoded.id;
+    const user = jwt.verify(token, "abcd123456");
+    const userID = user.id;
     console.log(userID);
     res.json("User details retreived");
 
@@ -96,9 +96,42 @@ const updateuser = async(req,res)=>{
     // }
 }
 
+const createAnotherUser = async(req, res) => {
+    try {
+        const { firstName, lastName, mobile_no, email,role} = req.body;
+        const user = await User.findOne({ user: email });
+        if (user) {
+            return res.status(400).json({ message: "Email already registered" });
+        }
+const normalPassword = req.body.password;
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(normalPassword, saltRounds);
+        const newUser = {
+            firstName,
+            lastName,
+            mobile_no,
+            email,
+            password : hashedPassword,
+            role
+        };
+        const result = await new User(newUser).save();
+        // const resObj = {
+        //     firstName : newUser.firstName,
+        //     lastName : newUser.lastName,
+        //     email : newUser.email,
+        //     role : newUser.role
+        // }
+        res.status(200).json(result );
+    } catch (err) {
+        res.status(500).send('Internal Server error');
+    }
+ }
+
+
 module.exports = { 
     createUser,
     userLogin,
     getUser,
-    updateuser
+    updateuser,
+    createAnotherUser
 };

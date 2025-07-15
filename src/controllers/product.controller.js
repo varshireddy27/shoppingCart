@@ -1,64 +1,120 @@
+// const productModel = require("../models/product.model");
 const Product = require("../models/product.model");
+const base_url = process.env.BASE_URL;
+const getPrimaryImageUrl = (files) => {
+  const primaryImage = files.find((el) => el.fieldname === "image");
+  if (primaryImage) {
+    return base_url + primaryImage.filename;
+  }
+};
+const getAdditionalImages = (files) => {
+  const additionalImages = files.filter((el) => el.fieldname === "images");
+  const urlArray = [];
+  if (additionalImages.length > 0) {
+    additionalImages.forEach((img) => {
+      const url = base_url + img.filename;
+      urlArray.push(url);
+    });
+  }
+  return urlArray;
+};
 const createProduct = async (req, res) => {
-  try {
- 
-    const { name, type, price, ratings } = req.body;
-    const image  = req.files;
- 
-    if(!image){
-      res.status(404).send('cannot read the file');
-    }
-    const file = req.files[0];
-    const newfilepath = file.filename;
-    console.log(newfilepath);
-    const base_url = "http://localhost:3000/upload/"
-    const imageurl = base_url + newfilepath;
- 
-    const images = req.files;
-    console.log(images);
-    if(!images){
-      return res.status(400).send("File is not read");
-    }
-    const imageurls = [];
-    images.forEach((file, index) => {
-      const filepath = file.filename;
-      const base_url = "http://localhost:3000/upload/";
-      const imageurl = base_url + filepath;
-      imageurls.push(imageurl);
-      console.log(` ${index +1}. filename : ${file.originalname}`);
-    })
+  // const {name, type, price, ratings} = req.body;
+  const name = req.body.name;
+  const type = req.body.type;
+  const price = req.body.price;
+  const ratings = req.body.ratings;
 
-    const newproduct = {
-      name,
+  if (!name || !type || !price || !ratings) {
+    return res.status(400).json({ message: "fields are missing" });
+  }
+  const newproduct = { name, type, price, ratings };
+
+  const imageArrayFiles = req.files;
+  const primaryImageUrl = getPrimaryImageUrl(imageArrayFiles, base_url);
+
+  if (primaryImageUrl) {
+    newproduct.image = primaryImageUrl;
+  }
+
+  const urlArray = getAdditionalImages(imageArrayFiles);
+  if (urlArray.length > 0) {
+    newproduct.images = urlArray;
+  }
+  const createdProduct = await Product.create(newproduct);
+  res.status(201).json(createdProduct);
+};
+
+const updateProduct = async (req, res) => {
+  const productId = req.params.id;
+  if (!productId) {
+    return res.status(404).send("Product Id not found");
+  }
+  const { brand, discount, stock } = req.body;
+  const newproduct = { brand, discount, stock };
+
+  const imageArrayFiles = req.files;
+  const primaryImageUrl = getPrimaryImageUrl(imageArrayFiles);
+  if (primaryImageUrl) {
+    newproduct.image = primaryImageUrl;
+  }
+
+  const urlArray = getAdditionalImages(imageArrayFiles);
+  if (urlArray.length > 0) {
+    newproduct.images = urlArray;
+  }
+  const updatedproduct = await Product.findByIdAndUpdate(productId, newproduct);
+  res.status(200).json(updatedproduct);
+};
+
+const getAllProducts = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      brand,
       type,
-      price,
-      ratings,
-      image:imageurl,
-      images : imageurls
+      pricestart,
+      priceend,
+    } = req.query;
+
+    // pagination logic
+    const skip = (page - 1) * limit;
+
+    let filterObj = {};
+    if (brand) {
+      filterObj.brand = brand;
+    }
+    if (type) {
+      filterObj.type = type;
+    }
+
+    filterObj.price = {};
+    if (pricestart) {
+      filterObj.price.$gte = Number(pricestart);
+    }
+    if (priceend) {
+      filterObj.price.$lte = Number(priceend);
+    }
+
+    const total = await Product.countDocuments(filterObj);
+    const products = await Product.find(filterObj).skip(skip).limit(limit);
+
+    const resObj = {
+      total,
+      page,
+      data: products,
     };
-    const updateproduct = await new Product(newproduct).save();
-    res.status(200).json({message:'data is retrieved',data:updateproduct});
- 
+
+    res.status(200).json({ message: "Products retrived", data: resObj });
   } catch (err) {
-    res.status(500).send("internal serval error");
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
-const updateProduct = async(req, res) => {
-    const productId = req.params.id;
-    if(!productId) {
-      return res.status(404).send("Product Id not found");
-    }
-    const { brand, description, discount, stock} = req.body;
-    const updatedProduct = await Product.findByIdAndUpdate(productId,
-        {brand, description, discount, stock}
-    );
-    res.status(200).json(updatedProduct);
-
-}
- 
-module.exports = { 
+module.exports = {
   createProduct,
-  updateProduct
- };
-
+  updateProduct,
+  getAllProducts,
+};

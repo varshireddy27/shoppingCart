@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const addressEnum = ["home", "work", "other"]
-const roleEnum = ['user', 'admin','seller'];
 const userSchema = new mongoose.Schema ({
     firstName : { type : String},
     lastName : { type : String},
@@ -17,7 +16,9 @@ const userSchema = new mongoose.Schema ({
             address_type : {type : addressEnum, default : 'home'}  
         }
     ],
-    role : { type : roleEnum, default : 'user', required : true},
+    role : { type : String,
+        enum : ['user', 'admin', 'seller'],
+        required : true, default : 'user'},
 },
     {
         timeStamps : true
