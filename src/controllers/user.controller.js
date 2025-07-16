@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = "abcd123456";
 const createUser = async(req, res)=> {
-    // try {
+    try {
         const { firstName, lastName, mobile_no, email} = req.body;
         const user = await User.findOne({ user: email });
         if (user) {
@@ -26,9 +26,9 @@ const createUser = async(req, res)=> {
             email : newUser.email
         }
         res.status(200).json({message : "User created succefully", data : resObj});
-    // } catch (err) {
-    //     res.status(500).send('Internal Server error');
-    // }
+    } catch (err) {
+        res.status(500).send('Internal Server error');
+    }
 
 }
 const userLogin = async(req, res) => {
@@ -96,42 +96,10 @@ const updateuser = async(req,res)=>{
     // }
 }
 
-const createAnotherUser = async(req, res) => {
-    try {
-        const { firstName, lastName, mobile_no, email,role} = req.body;
-        const user = await User.findOne({ user: email });
-        if (user) {
-            return res.status(400).json({ message: "Email already registered" });
-        }
-const normalPassword = req.body.password;
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(normalPassword, saltRounds);
-        const newUser = {
-            firstName,
-            lastName,
-            mobile_no,
-            email,
-            password : hashedPassword,
-            role
-        };
-        const result = await new User(newUser).save();
-        // const resObj = {
-        //     firstName : newUser.firstName,
-        //     lastName : newUser.lastName,
-        //     email : newUser.email,
-        //     role : newUser.role
-        // }
-        res.status(200).json(result );
-    } catch (err) {
-        res.status(500).send('Internal Server error');
-    }
- }
-
 
 module.exports = { 
     createUser,
     userLogin,
     getUser,
-    updateuser,
-    createAnotherUser
+    updateuser
 };
