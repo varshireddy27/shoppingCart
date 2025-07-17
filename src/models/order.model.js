@@ -1,5 +1,5 @@
-const mongoose = require('momgoose');
-const statusEnum = ['Pending', 'Proccessed', 'Shipped', 'Delivered', 'Cancelled'];
+const mongoose = require('mongoose');
+const statusEnum = ['Pending', 'packed', 'Shipped', 'Delivered', 'Cancelled'];
 const orderSchema = mongoose.Schema({
     user_id : {type: mongoose.Schema.Types.ObjectId, ref : "User", required : true},
     items : [{ 
@@ -7,15 +7,20 @@ const orderSchema = mongoose.Schema({
         quantity : {type : Number, required : true},
         price_at_purchase : { type : Number, required : true }
     }],
-    order_placed : { type : String, required : true},
     order_total : { type : Number, required : true},
-    status : { type : statusEnum, required : true, default : 'Pending' },
+    order_status : { type : String, enum : statusEnum, required : true, default : 'Pending' },
     paymentMethod : {
         type : String,
         enum : ['credit_card', 'debit_card', 'UPI', 'COD' ],
         required : true
+    },
+    paymentStatus : {
+        type : String,
+        enum : ['processing','successfull','cancelled' ],
+        deafult : "processing"
     }
+
 }, {
-        timeStamps : true
+        timestamps : true
 });
 module.exports = mongoose.model('Order', orderSchema);
